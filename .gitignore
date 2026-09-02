@@ -1,0 +1,33 @@
+# OpenBao data and sensitive files
+/config/tls/
+unseal_keys.txt
+root_token.txt
+*.key
+*.crt
+*.pem
+
+# Environment overrides
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Docker volumes (local development)
+openbao_*/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+/tmp/
+*.tmp
