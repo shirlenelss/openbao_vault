@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # TEST Environment
+  openbao-test:
+    build: .
+    container_name: openbao-test
+    environment:
+      BAO_ENV: test
+      BAO_API_ADDR: "http://0.0.0.0:8200"
+      BAO_UI: "true"
+    ports:
+      - "8200:8200"
+    volumes:
+      - openbao_test_data:/openbao/data
+      - ./config/bao.hcl:/openbao/config/bao.hcl
+      - ./config/pki-setup.sh:/openbao/config/pki-setup.sh
+    networks:
+      - openbao-network
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/v1/sys/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - test
+      - all
+
+  # SANDBOX Environment
+  openbao-sandbox:
+    build: .
+    container_name: openbao-sandbox
+    environment:
+      BAO_ENV: sandbox
+      BAO_API_ADDR: "http://0.0.0.0:8200"
+      BAO_UI: "true"
+    ports:
+      - "8201:8200"
+    volumes:
+      - openbao_sandbox_data:/openbao/data
+      - ./config/bao.hcl:/openbao/config/bao.hcl
+      - ./config/pki-setup.sh:/openbao/config/pki-setup.sh
+    networks:
+      - openbao-network
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/v1/sys/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - sandbox
+      - all
+
+  # PRODUCTION Environment
+  openbao-prod:
+    build: .
+    container_name: openbao-prod
+    environment:
+      BAO_ENV: prod
+      BAO_API_ADDR: "http://0.0.0.0:8200"
+      BAO_UI: "true"
+    ports:
+      - "8202:8200"
+    volumes:
+      - openbao_prod_data:/openbao/data
+      - ./config/bao.hcl:/openbao/config/bao.hcl
+      - ./config/pki-setup.sh:/openbao/config/pki-setup.sh
+    networks:
+      - openbao-network
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8200/v1/sys/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - prod
+      - all
+
+volumes:
+  openbao_test_data:
+  openbao_sandbox_data:
+  openbao_prod_data:
+
+networks:
+  openbao-network:
+    driver: bridge
