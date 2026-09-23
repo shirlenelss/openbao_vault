@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao
+  labels:
+    app: openbao
+spec:
+  replicas: 1
+  # The file storage backend is single-writer (no HA) - a second pod against
+  # the same PVC would corrupt it. Recreate avoids two pods ever running at
+  # once during a rollout. Real HA needs Vault/OpenBao's Raft integrated
+  # storage instead, which this scaffold does not set up.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openbao
+  template:
+    metadata:
+      labels:
+        app: openbao
+    spec:
+      containers:
+        - name: openbao
+          image: openbao-vault
+          ports:
+            - name: http
+              containerPort: 8200
+          env:
+            - name: BAO_ENV
+              value: test
+            - name: BAO_API_ADDR
+              value: http://0.0.0.0:8200
+            - name: BAO_UI
+              value: "true"
+          volumeMounts:
+            - name: config
+              mountPath: /openbao/config/bao.hcl
+              subPath: bao.hcl
+            - name: data
+              mountPath: /openbao/data
+          # TCP only - a sealed-but-alive process is expected after every
+          # restart (see GETTING_STARTED.md) and must not be killed for it.
+          livenessProbe:
+            tcpSocket:
+              port: 8200
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          # /v1/sys/health returns non-200 while sealed/uninitialized, which
+          # is the correct "not ready to serve" signal here.
+          readinessProbe:
+            httpGet:
+              path: /v1/sys/health
+              port: 8200
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: openbao-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: openbao-data

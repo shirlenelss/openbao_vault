@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+openbao:
+  base-url: ${OPENBAO_ADDR:http://localhost:8200}
+  token: ${OPENBAO_TOKEN:}
+  default-role: leaf
+  encryption-role: encryption
+  pki-mounts:
+    pid-issuer: pid-issuer
+    verifier-backend: verifier-backend
+    wallet-provider: wallet-provider
+    trust-source: trust-source

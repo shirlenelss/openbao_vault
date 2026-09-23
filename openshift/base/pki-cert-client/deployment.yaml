@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pki-cert-client
+  labels:
+    app: pki-cert-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pki-cert-client
+  template:
+    metadata:
+      labels:
+        app: pki-cert-client
+    spec:
+      containers:
+        - name: pki-cert-client
+          image: pki-cert-client
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: OPENBAO_ADDR
+              value: http://openbao:8200
+            - name: OPENBAO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openbao-token
+                  key: token
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

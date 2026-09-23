@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: openbao
+spec:
+  # host omitted - OpenShift assigns one under the cluster's default routing
+  # subdomain. Set it explicitly in an overlay if you need a fixed hostname.
+  to:
+    kind: Service
+    name: openbao
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

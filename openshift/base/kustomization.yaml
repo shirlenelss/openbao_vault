@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - openbao/configmap-bao-hcl.yaml
+  - openbao/pvc.yaml
+  - openbao/deployment.yaml
+  - openbao/service.yaml
+  - openbao/route.yaml
+  - pki-cert-client/deployment.yaml
+  - pki-cert-client/service.yaml
+  - pki-cert-client/route.yaml
+  # secret.example.yaml is intentionally NOT listed - see that file.
+
+images:
+  - name: openbao-vault
+    newName: REPLACE_WITH_YOUR_REGISTRY/openbao-vault
+    newTag: latest
+  - name: pki-cert-client
+    newName: REPLACE_WITH_YOUR_REGISTRY/pki-cert-client
+    newTag: latest

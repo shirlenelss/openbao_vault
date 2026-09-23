@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openbao-config
+data:
+  bao.hcl: |
+    ui = true
+
+    storage "file" {
+      path = "/openbao/data"
+    }
+
+    listener "tcp" {
+      address       = "0.0.0.0:8200"
+      tls_disable   = true
+    }
+
+    telemetry {
+      prometheus_retention_time = "30s"
+      disable_hostname          = true
+    }

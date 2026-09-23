@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: openbao-prod
+
+resources:
+  - ../../base
+
+patches:
+  - target:
+      kind: Deployment
+      name: openbao
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/env/0/value
+        value: prod
+
+# NOTE: this still runs OpenBao as a single replica on the file storage
+# backend - same non-HA limitation as every other environment (see
+# base/openbao/deployment.yaml). Before using this for anything real, switch
+# to Vault/OpenBao's Raft integrated storage (or an external backend) and
+# size the PVC/resources for actual load. The leaf PKI roles for prod are
+# also still allow_any_name=true (see scripts/init-pki.sh) until a real prod
+# domain convention is chosen.

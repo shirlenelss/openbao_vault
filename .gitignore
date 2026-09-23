@@ -9,6 +9,9 @@ root_token.txt
 # Environment overrides
 .env.local
 .env.*.local
+.test.env
+.sandbox.env
+.prod.env
 
 # Logs
 *.log
@@ -31,3 +34,6 @@ Thumbs.db
 # Temporary files
 /tmp/
 *.tmp
+
+# Maven build output
+pki-cert-client/target/
