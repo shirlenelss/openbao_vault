@@ -17,6 +17,7 @@ with their own OpenBao instance, PKI hierarchy, and data volume.
 |---|---|
 | `docker-compose.yml`, `Dockerfile`, `config/` | OpenBao itself, run locally in Docker |
 | `scripts/init-pki.sh` | Bootstraps the 4 PKI engines + roles in a running OpenBao instance |
+| `scripts/init-kv.sh` | Enables a KV v2 secrets engine (`bao kv put`/`get`) — not mounted by default |
 | `pki-cert-client/` | Spring Boot REST app that issues certs from OpenBao as PKCS12 keystores |
 | `openshift/` | Kustomize manifests (base + test/sandbox/prod overlays) to run both of the above on OpenShift |
 | `GETTING_STARTED.md` | Full step-by-step: build → start → init → unseal → generate PKI |
@@ -102,6 +103,26 @@ OPENBAO_ADDR=http://localhost:8200 OPENBAO_TOKEN=<root_token> java -jar target/p
 `SERVER_PORT` if something else on your machine already holds it (e.g. `k9s`
 does this by default and silently swallows requests without an obvious
 error).
+
+## Storing app secrets (KV)
+
+The four PKI engines above don't help if you just want to stash a plain
+secret. Nothing enables a KV engine by default — run this once per
+environment first:
+
+```bash
+BAO_TOKEN=<root_token> BAO_ADDR=http://localhost:8200 ./scripts/init-kv.sh test   # or sandbox / prod
+```
+
+Then:
+
+```bash
+bao kv put secret/some-app foo=bar
+bao kv get secret/some-app
+```
+
+Same commands work identically once OpenBao is deployed to the cluster — it's
+the same API either way. Idempotent — safe to re-run per environment.
 
 ## Deploying to OpenShift
 
