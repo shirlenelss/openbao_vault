@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cert-rotate-scripts
+data:
+  fetch.sh: |
+    #!/bin/sh
+    set -eu
+
+    WORK_DIR=/work
+    BASE_URL="http://pki-cert-client:8080/api/certificates"
+    TTL="${CERT_TTL:-2160h}"
+    ENV="${ENVIRONMENT:-test}"
+
+    fetch() {
+      ca=$1
+      path=$2
+      cn="${ca}.${ENV}.internal"
+      echo "Issuing ${ca} (cn=${cn}, path=${path})"
+      curl -sf -X POST "${BASE_URL}/${path}" \
+        -H 'Content-Type: application/json' \
+        -d "{\"commonName\":\"${cn}\",\"ttl\":\"${TTL}\"}" \
+        -o "${WORK_DIR}/${ca}.p12"
+    }
+
+    # pid-issuer uses the bundle endpoint (main cert + nonce/request-encryption
+    # keys in one keystore); the other three are single-key.
+    fetch verifier-backend verifier-backend
+    fetch wallet-provider wallet-provider
+    fetch trust-source trust-source
+    fetch pid-issuer pid-issuer/bundle
+
+    echo "All keystores fetched"
+
+  apply.sh: |
+    #!/bin/sh
+    set -eu
+
+    WORK_DIR=/work
+    NAMESPACE="${POD_NAMESPACE}"
+
+    apply_secret() {
+      ca=$1
+      name="${ca}-keystore"
+      echo "Updating secret ${name}"
+      kubectl create secret generic "${name}" \
+        --from-file=keystore.p12="${WORK_DIR}/${ca}.p12" \
+        --namespace="${NAMESPACE}" \
+        --dry-run=client -o yaml | kubectl apply -f -
+    }
+
+    apply_secret verifier-backend
+    apply_secret wallet-provider
+    apply_secret trust-source
+    apply_secret pid-issuer
+
+    echo "All keystore secrets updated"

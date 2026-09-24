@@ -11,6 +11,10 @@ resources:
   - pki-cert-client/service.yaml
   - pki-cert-client/route.yaml
   # secret.example.yaml is intentionally NOT listed - see that file.
+  - rotation/serviceaccount.yaml
+  - rotation/rbac.yaml
+  - rotation/configmap-scripts.yaml
+  - rotation/cronjob.yaml
 
 images:
   - name: openbao-vault

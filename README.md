@@ -19,7 +19,7 @@ with their own OpenBao instance, PKI hierarchy, and data volume.
 | `scripts/init-pki.sh` | Bootstraps the 4 PKI engines + roles in a running OpenBao instance |
 | `scripts/init-kv.sh` | Enables a KV v2 secrets engine (`bao kv put`/`get`) — not mounted by default |
 | `pki-cert-client/` | Spring Boot REST app that issues certs from OpenBao as PKCS12 keystores |
-| `openshift/` | Kustomize manifests (base + test/sandbox/prod overlays) to run both of the above on OpenShift |
+| `openshift/` | Kustomize manifests (base + test/sandbox/prod overlays) to run both of the above on OpenShift, plus a `CronJob` that rotates issued certs weekly |
 | `GETTING_STARTED.md` | Full step-by-step: build → start → init → unseal → generate PKI |
 | `CLAUDE.md` | Detailed architecture notes, gotchas, and non-obvious decisions (written for AI-assisted development, but useful to anyone working in this repo) |
 
@@ -143,6 +143,19 @@ Image references in `openshift/base/kustomization.yaml` are placeholders —
 there's no CI/registry push pipeline in this repo yet, so images need to be
 built and pushed manually before applying. See `CLAUDE.md` for the full
 breakdown of what each manifest does and why.
+
+### Automatic certificate rotation
+
+A weekly `CronJob` (`openshift/base/rotation/`) keeps the 4 issued keystores
+fresh — it just calls `pki-cert-client`'s own endpoints and writes the
+results as `<ca>-keystore` Secrets (`pid-issuer-keystore` holds the 3-key
+bundle), no changes to the app itself. Requests 90-day certs on a weekly
+schedule, so it doesn't track what's actually due for renewal — it just
+always reissues, which is simpler and leaves a wide safety margin even if
+several runs are missed. Downstream services still need their own
+watch-and-reload on these Secrets to pick up a rotation (e.g.
+[Reloader](https://github.com/stakater/Reloader)) — not set up here, since
+those services live in other repos.
 
 ## Secrets
 
