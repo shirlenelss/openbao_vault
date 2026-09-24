@@ -1,4 +1,8 @@
-FROM openbao/openbao:latest
+# Pinned, not :latest - upstream removed the "file" storage backend this
+# config relies on in v2.7.0 (2026-09-23), exactly as its own v2.6.2
+# deprecation warning said it would. Migrating to raft storage is the real
+# fix; see CLAUDE.md.
+FROM openbao/openbao:2.6.2
 
 USER root
 
